@@ -1,15 +1,16 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.1;
 
-import "./common/ERC721Enumerable.sol";
-import "./common/ERC721Metadata.sol";
-import "./common/Ownable.sol";
-import "./common/SafeMath.sol";
-import "./common/Address.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "./IEscrow.sol";
 import "./IModerator.sol";
 
-contract Moderator is IModerator, ERC721Enumerable, ERC721Metadata,Ownable {
-
+contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
+    using SafeMath for uint256;
     // max supply
     uint256 public maxSupply = 4000000; 
 
@@ -36,9 +37,27 @@ contract Moderator is IModerator, ERC721Enumerable, ERC721Metadata,Ownable {
     // escrow contract address
     address payable public escrowAddress;
 
-    constructor() public  ERC721Metadata("Vbhex Moderators", "Mod"){
+    constructor()  ERC721("Vbhex Moderator", "MOD")  {
 
     }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId,/* firstTokenId */
+        uint256 batchSize
+    )
+    internal
+    override(ERC721, ERC721Enumerable)
+    {
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
+
 
     // set escrow contract address
     function setEscrow(address payable _escrow) public onlyOwner {
@@ -49,7 +68,7 @@ contract Moderator is IModerator, ERC721Enumerable, ERC721Metadata,Ownable {
 
     // mint a new mod
     function mint() public onlyOwner {
-        uint256 tokenId                     = totalSupply().add(1);
+        uint256 tokenId                     = super.totalSupply().add(1);
         require(tokenId <= maxSupply, 'Mod: supply reach the max limit!');
         _safeMint(_msgSender(), tokenId);
         // set default mod score
@@ -61,18 +80,18 @@ contract Moderator is IModerator, ERC721Enumerable, ERC721Metadata,Ownable {
     }
 
     // get mod's total supply
-    function getMaxModId() external view returns(uint256) {
-        return totalSupply();
+    function getMaxModId() external view override returns(uint256) {
+        return super.totalSupply();
     }
 
     // get mod's owner
-    function getModOwner(uint256 modId) external view returns(address) {
-        require(modId <= totalSupply(),'Mod: illegal moderator ID!');
+    function getModOwner(uint256 modId) external view override returns(address) {
+        require(modId <= super.totalSupply(),'Mod: illegal moderator ID!');
         return ownerOf(modId);
     }
 
     // update mod's score
-    function updateModScore(uint256 modId, bool ifSuccess) external returns(bool) {
+    function updateModScore(uint256 modId, bool ifSuccess) external override returns(bool) {
         //Only Escrow contract can increase score
         require(escrowAddress == msg.sender,'Mod: only escrow contract can update mod score');
         //total score add 1

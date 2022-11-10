@@ -1,8 +1,9 @@
-pragma solidity ^0.5.16;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-import "./common/IERC20.sol";
-import "./common/Ownable.sol";
-import "./common/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./IEscrow.sol";
 import "./IModerator.sol";
 
@@ -160,17 +161,18 @@ contract Escrow is IEscrow, Ownable {
         uint256 orderId
     );
 
-    constructor(address _modAddress) public {
+    constructor(address _modAddress) payable {
             moderatorAddress    =   _modAddress;
             moderatorContract   =  IModerator(_modAddress);
 
     }
 
-    // make the contract payable
-    function() external payable {
-    }
+    // Function to deposit Ether into this contract.
+    // Call this function along with some Ether.
+    // The balance of this contract will be automatically updated.
+    receive() external payable {}
 
-    function getModAddress() external view returns (address)
+    function getModAddress() external view override returns (address)
     {
         return moderatorAddress;
     }
@@ -331,7 +333,7 @@ contract Escrow is IEscrow, Ownable {
         if (coinAddress == address(0)) {
             require(msg.value == amount, "Escrow: Wrong amount or wrong value sent");
             //send native currency to this contract
-            address(this).transfer(amount);
+            payable(this).transfer(amount);
         } else {
             IERC20 buyCoinContract = IERC20(coinAddress);
             //send ERC20 to this contract
@@ -1095,7 +1097,7 @@ contract Escrow is IEscrow, Ownable {
             //check balance is enough
             require(address(this).balance > _amount, "Escrow: insufficient balance");
 
-            _msgSender().transfer(_amount);
+            payable(_msgSender()).transfer(_amount);
         } else {
             //if the coin type is ERC20
 
