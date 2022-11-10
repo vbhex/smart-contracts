@@ -1,18 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.1;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 import "./IEscrow.sol";
-import "./IModerator.sol";
+import "./IModbook.sol";
 
-contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
+contract Modbook is IModbook,Ownable {
     using SafeMath for uint256;
     // max supply
     uint256 public maxSupply = 4000000; 
+
+    // total supply
+    uint256 public _totalSupply;
+
+    // ERC721 NFT struct
+    struct NFT {
+        address contractAddress;
+        uint256 tokenId;
+    }
+    // modId => NFT mapping
+    mapping(uint256 => NFT) public modNFT;
 
     // mod's total score
     mapping(uint256 => uint256) public modTotalScore;
@@ -37,27 +46,13 @@ contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
     // escrow contract address
     address payable public escrowAddress;
 
-    constructor()  ERC721("Vbhex Moderator", "MOD")  {
-
+    constructor()  {
+        _totalSupply = 0;
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId,/* firstTokenId */
-        uint256 batchSize
-    )
-    internal
-    override(ERC721, ERC721Enumerable)
-    {
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+    function totalSupply() public view returns(uint256) {
+        return _totalSupply;
     }
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-
-
 
     // set escrow contract address
     function setEscrow(address payable _escrow) public onlyOwner {
@@ -67,27 +62,34 @@ contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
     }
 
     // mint a new mod
-    function mint() public onlyOwner {
-        uint256 tokenId                     = super.totalSupply().add(1);
-        require(tokenId <= maxSupply, 'Mod: supply reach the max limit!');
-        _safeMint(_msgSender(), tokenId);
+    function mint(address nftContractAddress, uint256 nftId) public onlyOwner {
+        uint256 modId                     = totalSupply().add(1);
+        require(modId <= maxSupply, 'Mod: supply reach the max limit!');
+        // build modNFT mapping
+        NFT memory _nft;
+        _nft.contractAddress = nftContractAddress;
+        _nft.tokenId         =  nftId;
+        modNFT[modId]   =   _nft;
         // set default mod score
-        modTotalScore[tokenId]   =   1;  
+        modTotalScore[modId]   =   1;  
+        // total supply add 1
+        _totalSupply = modId;
         // emit mint event
         emit Mint(
-            tokenId
+            modId
         );
     }
 
     // get mod's total supply
     function getMaxModId() external view override returns(uint256) {
-        return super.totalSupply();
+        return totalSupply();
     }
 
     // get mod's owner
     function getModOwner(uint256 modId) external view override returns(address) {
-        require(modId <= super.totalSupply(),'Mod: illegal moderator ID!');
-        return ownerOf(modId);
+        require(modId <= totalSupply(),'Mod: illegal moderator ID!');
+        IERC721 nft = IERC721(modNFT[modId].contractAddress);
+        return nft.ownerOf(modNFT[modId].tokenId);
     }
 
     // update mod's score

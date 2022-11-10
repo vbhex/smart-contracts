@@ -5,14 +5,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./IEscrow.sol";
-import "./IModerator.sol";
+import "./IModbook.sol";
 
 contract Escrow is IEscrow, Ownable {
     using SafeMath for uint256;
-    //moderator contract
-    address public moderatorAddress;
+    //modbook contract
+    address public modbookAddress;
 
-    IModerator moderatorContract;
+    IModbook modbookContract;
 
 
     // total app num
@@ -162,8 +162,8 @@ contract Escrow is IEscrow, Ownable {
     );
 
     constructor(address _modAddress) payable {
-            moderatorAddress    =   _modAddress;
-            moderatorContract   =  IModerator(_modAddress);
+            modbookAddress    =   _modAddress;
+            modbookContract   =  IModbook(_modAddress);
 
     }
 
@@ -174,7 +174,7 @@ contract Escrow is IEscrow, Ownable {
 
     function getModAddress() external view override returns (address)
     {
-        return moderatorAddress;
+        return modbookAddress;
     }
 
     // get total apps quantity
@@ -304,11 +304,11 @@ contract Escrow is IEscrow, Ownable {
     }
 
     function getMaxModId() public view returns (uint256) {
-       return moderatorContract.getMaxModId();
+       return modbookContract.getMaxModId();
     }
 
     function getModOwner(uint256 modId) public view returns (address) {
-        return moderatorContract.getModOwner(modId);
+        return modbookContract.getModOwner(modId);
     }
 
     //Pay Order
@@ -328,7 +328,7 @@ contract Escrow is IEscrow, Ownable {
                 "Escrow: all the ids should be bigger than 0"
         );
         //Mod Id should be validated
-        require(modAId <= moderatorContract.getMaxModId(), "Escrow: mod id is too big");
+        require(modAId <= modbookContract.getMaxModId(), "Escrow: mod id is too big");
         //Native Currency
         if (coinAddress == address(0)) {
             require(msg.value == amount, "Escrow: Wrong amount or wrong value sent");
@@ -428,7 +428,7 @@ contract Escrow is IEscrow, Ownable {
                 "Escrow: refund amount must be bigger than 0 and not bigger than paid amount");
 
         require(
-            modBId > 0 && modBId <= moderatorContract.getMaxModId(),
+            modBId > 0 && modBId <= modbookContract.getMaxModId(),
             "Escrow: modB id does not exists"
         );
 
@@ -524,8 +524,8 @@ contract Escrow is IEscrow, Ownable {
                 "Escrow: mod can only vote on dispute escalated status"
             );
             // get the mod's owner wallet address
-            address modAWallet = moderatorContract.getModOwner(orderBook[orderId].modAId);
-            address modBWallet = moderatorContract.getModOwner(disputeBook[orderId].modBId);
+            address modAWallet = modbookContract.getModOwner(orderBook[orderId].modAId);
+            address modBWallet = modbookContract.getModOwner(disputeBook[orderId].modBId);
             // if modA's owner equal to modB's owner and they are msg sender
             if (
                 modAWallet == modBWallet &&
@@ -643,8 +643,8 @@ contract Escrow is IEscrow, Ownable {
             "Escrow: mod can only vote on dispute escalated status"
         );
         // get the mod's owner wallet address
-        address modAWallet = moderatorContract.getModOwner(orderBook[orderId].modAId);
-        address modBWallet = moderatorContract.getModOwner(disputeBook[orderId].modBId);
+        address modAWallet = modbookContract.getModOwner(orderBook[orderId].modAId);
+        address modBWallet = modbookContract.getModOwner(disputeBook[orderId].modBId);
         // if modA's owner equal to modB's owner and they are msg sender
         if (
             modAWallet == modBWallet && 
@@ -820,8 +820,8 @@ contract Escrow is IEscrow, Ownable {
         uint8 modNum = 1;
         uint8 winResolve = result ? 1 : 2;
         // get the mod's owner wallet address
-        address modAWallet = moderatorContract.getModOwner(orderBook[orderId].modAId);
-        address modBWallet = moderatorContract.getModOwner(disputeBook[orderId].modBId);
+        address modAWallet = modbookContract.getModOwner(orderBook[orderId].modAId);
+        address modBWallet = modbookContract.getModOwner(disputeBook[orderId].modBId);
         // if modA's owner equal to modB's owner, then just increase 1 success score for the owner
         // and add the mod commission
         if (
@@ -854,14 +854,14 @@ contract Escrow is IEscrow, Ownable {
                     orderBook[orderId].modAId,
                     modAWallet
                 );
-                moderatorContract.updateModScore(disputeBook[orderId].modBId,false);
+                modbookContract.updateModScore(disputeBook[orderId].modBId,false);
             } else {
                 rewardMod(
                     orderId,
                     disputeBook[orderId].modBId,
                     modBWallet
                 );
-                moderatorContract.updateModScore(orderBook[orderId].modAId,false);
+                modbookContract.updateModScore(orderBook[orderId].modAId,false);
             }
         }
         // else if modA agree with modB
@@ -962,7 +962,7 @@ contract Escrow is IEscrow, Ownable {
     // adding mod commission as well as increasing mod score
     
     function rewardMod(uint256 orderId, uint256 modId, address mod) private {
-        moderatorContract.updateModScore(modId, true);
+        modbookContract.updateModScore(modId, true);
         userBalance[mod][orderBook[orderId].coinAddress] = 
         userBalance[mod][orderBook[orderId].coinAddress].add(
             orderBook[orderId].amount.mul(appModCommission[orderBook[orderId].appId]).div(100));

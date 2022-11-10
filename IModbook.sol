@@ -1,6 +1,7 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IModerator {
+interface IModbook {
     
     // get mod's owner
     function getModOwner(uint256 modId) external view returns(address);
