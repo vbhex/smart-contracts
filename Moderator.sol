@@ -43,12 +43,21 @@ contract Moderator is IModerator, ERC721Tradable {
         return "https://savechives.com/rest/V1/vc/mod/contract/info";
     }
 
-    /**
-     * @dev Returns an URI for a given token ID
-     */
-    // function tokenURI(uint256 _tokenId) public pure override returns (string memory) {
-    //     return Strings.strConcat(baseTokenURI(), Strings.toString(_tokenId));
-    // }
+    function baseTokenURI() public pure returns (string memory) {
+        return "https://savechives.com/rest/V1/vc/mod/id/";
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return "https://savechives.com/rest/V1/vc/mod/id/";
+    }
+
+
+
+    function contractURI() public pure returns (string memory) {
+        return "https://savechives.com/rest/V1/vc/mod/contract/info";
+    }
+
+
 
     // set escrow contract address
     function setEscrow(address payable _escrow) public onlyOwner {
