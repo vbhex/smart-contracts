@@ -37,7 +37,7 @@ contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
     // escrow contract address
     address payable public escrowAddress;
 
-    constructor()  ERC721("Vbhex Moderator", "MOD")  {
+    constructor()  ERC721("Vbhex Moderator Testnet3", "tMOD3")  {
 
     }
 
@@ -56,10 +56,6 @@ contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
-
-    // function baseTokenURI() public pure returns (string memory) {
-    //     return "https://savechives.com/rest/V1/vc/mod/id/";
-    // }
 
     function _baseURI() internal view virtual override returns (string memory) {
         return "https://savechives.com/rest/V1/vc/mod/id/";
