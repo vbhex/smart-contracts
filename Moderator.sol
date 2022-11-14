@@ -12,7 +12,7 @@ import "./IModerator.sol";
 contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
     using SafeMath for uint256;
     // max supply
-    uint256 public maxSupply = 4000000; 
+    uint256 public maxSupply = 140000; 
 
     // mod's total score
     mapping(uint256 => uint256) public modTotalScore;
@@ -55,6 +55,20 @@ contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+
+    function baseTokenURI() public pure returns (string memory) {
+        return "https://savechives.com/rest/V1/vc/mod/id/";
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return "https://savechives.com/rest/V1/vc/mod/id/";
+    }
+
+
+
+    function contractURI() public pure returns (string memory) {
+        return "https://savechives.com/rest/V1/vc/mod/contract/info";
     }
 
 
